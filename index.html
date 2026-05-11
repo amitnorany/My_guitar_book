@@ -3,34 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>גיטרה בענן</title>
+    <title>ספר הגיטרה שלי</title>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-database-compat.js"></script>
     <style>
         body { font-family: system-ui, sans-serif; background: #f0f2f5; text-align: center; padding: 15px; margin: 0; }
         .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 600px; margin: auto; min-height: 85vh; }
         h1 { color: #2c3e50; border-bottom: 3px solid #e67e22; padding-bottom: 10px; }
-        button { width: 100%; padding: 16px; margin: 10px 0; border: none; border-radius: 12px; background: #2c3e50; color: white; font-size: 18px; font-weight: bold; cursor: pointer; }
+        
+        /* עיצוב כפתורים */
+        .item-row { display: flex; gap: 8px; margin: 10px 0; }
+        button { flex: 1; padding: 16px; border: none; border-radius: 12px; background: #2c3e50; color: white; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .del-btn { background: #e74c3c; width: 60px; flex: none; }
+        .back { background: #95a5a6; margin-top: 20px; }
+        .add-btn { background: #27ae60; margin-top: 20px; }
+
+        /* תיקון האקורדים */
         pre { 
             text-align: left; direction: ltr; background: #fffde7; padding: 20px; border-radius: 10px; 
             white-space: pre; font-family: 'Courier New', monospace; font-size: 16px; line-height: 1.5; 
-            border-left: 6px solid #e67e22; overflow-x: auto; 
+            border-left: 6px solid #e67e22; overflow-x: auto; margin: 15px 0;
         }
+
         .hebrew-text { text-align: right; direction: rtl; }
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; text-align: right; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; text-align: right; box-sizing: border-box; }
         textarea { height: 250px; font-family: monospace; direction: ltr; text-align: left; }
         .admin-panel { display: none; text-align: right; }
-        .back { background: #95a5a6; }
-        .add-btn { background: #27ae60; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>🎸 ספר השירים שלי</h1>
+        <h1>🎸 ספר הגיטרה שלי</h1>
         <div id="status">מתחבר...</div>
         <div id="content"></div>
+
         <div id="admin" class="admin-panel">
-            <h3>הוספת שיר</h3>
+            <h3>הוספת שיר חדש</h3>
             <input type="text" id="songTitle" placeholder="שם השיר">
             <input type="text" id="mainCat" placeholder="קטגוריה (למשל: עברית)">
             <input type="text" id="subCat" placeholder="תת-קטגוריה">
@@ -38,8 +46,10 @@
             <button onclick="saveToCloud()">🚀 שמור</button>
             <button class="back" onclick="toggleAdmin(false)">ביטול</button>
         </div>
+
         <button id="addBtn" class="add-btn" onclick="toggleAdmin(true)">➕ הוסף שיר</button>
     </div>
+
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyAuCpOqBt9k4hrz4ITSzVe_vLlyxOx6GYo",
@@ -50,60 +60,83 @@
         messagingSenderId: "1032457841570",
         appId: "1:1032457841570:web:f616ae37ae1a3ff0b560fb"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     let songsData = {};
+
     db.ref('songs').on('value', (snapshot) => {
         songsData = snapshot.val() || {};
         document.getElementById('status').innerText = "✅ מחובר";
         init();
     });
+
     function init() {
         toggleAdmin(false);
-        let html = "";
-        Object.keys(songsData).forEach(cat => {
-            html += `<button onclick="showSubCats('${cat}')">${cat}</button>`;
+        let html = "<h3>קטגוריות:</h3>";
+        Object.keys(songsData).sort().forEach(cat => {
+            html += `<div class="item-row">
+                <button onclick="showSubCats('${cat}')">${cat}</button>
+                <button class="del-btn" onclick="deleteItem('songs/${cat}', '${cat}')">🗑️</button>
+            </div>`;
         });
         document.getElementById('content').innerHTML = html;
     }
+
     function showSubCats(cat) {
-        let html = `<h3>${cat}:</h3>`;
-        Object.keys(songsData[cat]).forEach(sub => {
-            html += `<button onclick="showSongsList('${cat}', '${sub}')">${sub}</button>`;
+        let html = `<div class="hebrew-text"><h3>${cat}:</h3></div>`;
+        Object.keys(songsData[cat]).sort().forEach(sub => {
+            html += `<div class="item-row">
+                <button onclick="showSongsList('${cat}', '${sub}')">${sub}</button>
+                <button class="del-btn" onclick="deleteItem('songs/${cat}/${sub}', '${sub}')">🗑️</button>
+            </div>`;
         });
-        html += `<button class="back" onclick="init()">חזור</button>`;
+        html += `<button class="back" onclick="init()">⬅️ חזור</button>`;
         document.getElementById('content').innerHTML = html;
     }
+
     function showSongsList(cat, sub) {
         let songs = songsData[cat][sub];
-        let html = `<h3>${sub}:</h3>`;
-        Object.keys(songs).forEach(key => {
-            html += `<button onclick="viewSong('${cat}','${sub}','${key}')">${songs[key].t}</button>`;
+        let html = `<div class="hebrew-text"><h3>${sub}:</h3></div>`;
+        Object.keys(songs).sort().forEach(key => {
+            html += `<div class="item-row">
+                <button onclick="viewSong('${cat}','${sub}','${key}')">${songs[key].t}</button>
+                <button class="del-btn" onclick="deleteItem('songs/${cat}/${sub}/${key}', '${songs[key].t}')">🗑️</button>
+            </div>`;
         });
-        html += `<button class="back" onclick="showSubCats('${cat}')">חזור</button>`;
+        html += `<button class="back" onclick="showSubCats('${cat}')">⬅️ חזור</button>`;
         document.getElementById('content').innerHTML = html;
     }
+
     function viewSong(cat, sub, key) {
         let s = songsData[cat][sub][key];
         document.getElementById('content').innerHTML = `
             <div class="hebrew-text"><h2>${s.t}</h2></div>
             <pre>${s.c}</pre>
-            <button class="back" onclick="showSongsList('${cat}','${sub}')">חזור</button>
+            <button class="back" onclick="showSongsList('${cat}','${sub}')">⬅️ חזור</button>
         `;
     }
+
+    function deleteItem(path, name) {
+        if(confirm("בטוח שברצונך למחוק את '" + name + "'?")) {
+            db.ref(path).remove();
+        }
+    }
+
     function toggleAdmin(show) {
         document.getElementById('admin').style.display = show ? 'block' : 'none';
         document.getElementById('content').style.display = show ? 'none' : 'block';
         document.getElementById('addBtn').style.display = show ? 'none' : 'block';
     }
+
     function saveToCloud() {
         const title = document.getElementById('songTitle').value;
-        const cat = document.getElementById('mainCat').value || "כללי";
-        const sub = document.getElementById('subCat').value || "שירים";
+        const cat = document.getElementById('mainCat').value || "עברית";
+        const sub = document.getElementById('subCat').value || "כללי";
         const content = document.getElementById('songContent').value;
         if(!title || !content) return alert("מלא פרטים");
         db.ref(`songs/${cat}/${sub}`).push({ t: title, c: content }).then(() => {
-            alert("נשמר!");
+            alert("השיר נשמר בהצלחה!");
             init();
         });
     }
