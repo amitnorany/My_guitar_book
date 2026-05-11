@@ -11,18 +11,28 @@
         .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 600px; margin: auto; min-height: 85vh; }
         h1 { color: #2c3e50; border-bottom: 3px solid #e67e22; padding-bottom: 10px; }
         
-        /* עיצוב כפתורים */
+        /* כפתורי מחיקה ותפריטים */
         .item-row { display: flex; gap: 8px; margin: 10px 0; }
         button { flex: 1; padding: 16px; border: none; border-radius: 12px; background: #2c3e50; color: white; font-size: 18px; font-weight: bold; cursor: pointer; }
         .del-btn { background: #e74c3c; width: 60px; flex: none; }
         .back { background: #95a5a6; margin-top: 20px; }
         .add-btn { background: #27ae60; margin-top: 20px; }
 
-        /* תיקון האקורדים */
+        /* התיקון הקריטי לאקורדים - יישור לשמאל ופונט קבוע */
         pre { 
-            text-align: left; direction: ltr; background: #fffde7; padding: 20px; border-radius: 10px; 
-            white-space: pre; font-family: 'Courier New', monospace; font-size: 16px; line-height: 1.5; 
-            border-left: 6px solid #e67e22; overflow-x: auto; margin: 15px 0;
+            text-align: left !important; 
+            direction: ltr !important; 
+            background: #fffde7; 
+            padding: 20px; 
+            border-radius: 10px; 
+            white-space: pre !important; 
+            font-family: 'Courier New', Courier, monospace !important; 
+            font-size: 16px; 
+            line-height: 1.6; 
+            border-left: 6px solid #e67e22; 
+            overflow-x: auto; 
+            margin: 15px 0;
+            display: block;
         }
 
         .hebrew-text { text-align: right; direction: rtl; }
